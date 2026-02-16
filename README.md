@@ -57,3 +57,19 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+# LocateMyFotoOnTheTrail
+
+Web app (Angular) for matching photos to GPX track points by timestamp and writing GPS coordinates back into photo metadata.
+
+## Goal (MVP)
+- Import many photos + one GPX file
+- For each photo: find location based on photo timestamp and GPX track time
+- Write GPS coordinates to the photo (option to overwrite existing location)
+
+## Tech
+- Angular (standalone)
+- Tailwind CSS
+
+## License
+MIT
