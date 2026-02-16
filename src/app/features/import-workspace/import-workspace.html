@@ -1,0 +1,54 @@
+<main class="min-h-dvh bg-zinc-950 text-zinc-100">
+  <div class="mx-auto max-w-6xl px-6 py-12">
+    <header class="text-center">
+      <h1 class="text-4xl font-semibold tracking-tight">
+        Add location to your photos!
+      </h1>
+      <p class="mx-auto mt-3 max-w-2xl text-base text-zinc-300">
+        All you need to do is to add GPX from your adventure and photos taken then.
+      </p>
+    </header>
+
+    <section class="mt-10 grid gap-6 md:grid-cols-2">
+     <!-- Photos panel -->
+      <div class="panel">
+        <div class="panel__header">
+          <h2 class="panel__title">Photos</h2>
+          <p class="panel__subtitle">Upload one or many photos.</p>
+        </div>
+
+        <div class="panel__content">
+          <label class="btn">
+            <input class="sr-only" type="file" accept="image/*" multiple />
+            <span>Add photos</span>
+          </label>
+
+          <div class="panel__placeholder">
+            Photo list will appear here.
+          </div>
+        </div>
+      </div>
+
+      <!-- GPX panel -->
+      <div class="panel">
+        <div class="panel__header">
+          <h2 class="panel__title">GPX track</h2>
+          <p class="panel__subtitle">Upload a single GPX file.</p>
+        </div>
+
+        <div class="panel__content">
+          <label class="btn">
+            <input class="sr-only" type="file" accept=".gpx,application/gpx+xml,text/xml" />
+            <span>Add GPX</span>
+          </label>
+
+          <div class="panel__placeholder">
+            Track preview will appear here.
+          </div>
+        </div>
+      </div>
+
+    
+    </section>
+  </div>
+</main>

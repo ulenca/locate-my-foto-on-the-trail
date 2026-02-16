@@ -1,1 +1,31 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-zinc-800 bg-zinc-900/40 shadow-sm backdrop-blur;
+  }
+
+  .panel__header {
+    @apply border-b border-zinc-800 px-6 py-5;
+  }
+
+  .panel__title {
+    @apply text-lg font-semibold;
+  }
+
+  .panel__subtitle {
+    @apply mt-1 text-sm text-zinc-300;
+  }
+
+  .panel__content {
+    @apply px-6 py-6;
+  }
+
+  .panel__placeholder {
+    @apply mt-6 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/30 px-4 py-10 text-center text-sm text-zinc-400;
+  }
+
+  .btn {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-100 px-5 py-3 text-sm font-semibold text-zinc-900 hover:bg-white focus:outline-none focus:ring-2 focus:ring-white/30;
+  }
+}
