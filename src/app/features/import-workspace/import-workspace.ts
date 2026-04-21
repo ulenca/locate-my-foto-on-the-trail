@@ -3,10 +3,11 @@ import { ChangeDetectorRef, Component, PLATFORM_ID, inject } from '@angular/core
 import { GeoCoordinate } from '../../domain/geo-coordinate';
 import { PhotoAsset, TakenAtSource } from '../../domain/photo-asset';
 import { PhotoPreviewComponent } from './photo-preview/photo-preview';
+import { GpxPanelComponent, GpxTrack } from './gpx-panel/gpx-panel';
 
 @Component({
   selector: 'app-import-workspace',
-  imports: [PhotoPreviewComponent, CommonModule],
+  imports: [PhotoPreviewComponent, CommonModule, GpxPanelComponent],
   templateUrl: './import-workspace.html',
   styleUrl: './import-workspace.scss',
 })
@@ -16,12 +17,24 @@ export class ImportWorkspace {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  gpxTrack: GpxTrack | null = null;
+
+onTrackLoaded(track: GpxTrack): void {
+  this.gpxTrack = track;
+}
+
   async onPhotosSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
 
     const selectedFiles = Array.from(input.files ?? []).filter((file) => this.isJpeg(file));
-console.log('Selected files:', Array.from(input.files ?? []).map(f => ({ name: f.name, type: f.type })));
-console.log('Accepted JPEG files:', selectedFiles.map(f => ({ name: f.name, type: f.type })));
+    console.log(
+      'Selected files:',
+      Array.from(input.files ?? []).map((f) => ({ name: f.name, type: f.type })),
+    );
+    console.log(
+      'Accepted JPEG files:',
+      selectedFiles.map((f) => ({ name: f.name, type: f.type })),
+    );
     if (selectedFiles.length === 0) {
       this.importedPhotos = [];
       return;
@@ -40,7 +53,11 @@ console.log('Accepted JPEG files:', selectedFiles.map(f => ({ name: f.name, type
         .map((r) => r.value);
 
       this.importedPhotos = photos.sort((a, b) => a.file.name.localeCompare(b.file.name));
-      console.log('Imported photos count:', this.importedPhotos.length, this.importedPhotos.map(p => p.file.name));
+      console.log(
+        'Imported photos count:',
+        this.importedPhotos.length,
+        this.importedPhotos.map((p) => p.file.name),
+      );
       console.timeEnd('exif-read');
     } finally {
       this.isReadingExif = false;
@@ -54,9 +71,9 @@ console.log('Accepted JPEG files:', selectedFiles.map(f => ({ name: f.name, type
       this.readPhotoAsset(file),
       new Promise<PhotoAsset>((resolve) => {
         window.setTimeout(
-  () => resolve({ file, takenAt: null, takenAtSource: 'UNKNOWN', location: null }),
-  timeoutMs
-);
+          () => resolve({ file, takenAt: null, takenAtSource: 'UNKNOWN', location: null }),
+          timeoutMs,
+        );
       }),
     ]);
   }
@@ -85,70 +102,64 @@ console.log('Accepted JPEG files:', selectedFiles.map(f => ({ name: f.name, type
   }
 
   private async readPhotoAsset(file: File): Promise<PhotoAsset> {
-  if (!isPlatformBrowser(this.platformId)) {
-    return { file, takenAt: null, takenAtSource: 'UNKNOWN', location: null };
-  }
-
-  try {
-    const mod: any = await import('exifr');
-    const exifr: any =
-      mod?.default?.default?.default ??
-      mod?.default?.default ??
-      mod?.default ??
-      mod;
-
-    const buffer = await file.arrayBuffer();
-    const parsed: any = await exifr.parse(buffer, true);
-
-    // 1) wyciąganie czasu + źródła
-    const exifCandidate =
-      parsed?.DateTimeOriginal ??
-      parsed?.CreateDate ??
-      parsed?.DateTimeDigitized ??
-      parsed?.exif?.DateTimeOriginal ??
-      parsed?.exif?.CreateDate ??
-      null;
-
-    const xmpCandidate =
-      parsed?.xmp?.DateTimeOriginal ??
-      parsed?.xmp?.CreateDate ??
-      parsed?.MetadataDate ?? // często XMP
-      null;
-
-    const candidate =
-      exifCandidate ?? xmpCandidate ?? null;
-
-    let takenAt: Date | null =
-      candidate instanceof Date
-        ? candidate
-        : typeof candidate === 'string'
-          ? new Date(candidate)
-          : null;
-
-    let takenAtSource: TakenAtSource =
-      exifCandidate != null ? 'EXIF'
-      : xmpCandidate != null ? 'XMP'
-      : 'UNKNOWN';
-
-    // Mega-fallback: timestamp pliku (systemowy)
-    if (!takenAt) {
-      takenAt = new Date(file.lastModified);
-      takenAtSource = 'FILE_TIMESTAMP';
+    if (!isPlatformBrowser(this.platformId)) {
+      return { file, takenAt: null, takenAtSource: 'UNKNOWN', location: null };
     }
 
-    // 2) GPS (różne miejsca zależnie od merge)
-    const lat = parsed?.latitude ?? parsed?.gps?.latitude ?? null;
-    const lon = parsed?.longitude ?? parsed?.gps?.longitude ?? null;
+    try {
+      const mod: any = await import('exifr');
+      const exifr: any =
+        mod?.default?.default?.default ?? mod?.default?.default ?? mod?.default ?? mod;
 
-    const location =
-      typeof lat === 'number' && typeof lon === 'number'
-        ? { latitude: lat, longitude: lon }
-        : null;
+      const buffer = await file.arrayBuffer();
+      const parsed: any = await exifr.parse(buffer, true);
 
-    return { file, takenAt, takenAtSource, location };
-  } catch (error) {
-    console.warn('EXIF read failed for:', file.name, error);
-    return { file, takenAt: null, takenAtSource: 'UNKNOWN', location: null };
+      // 1) wyciąganie czasu + źródła
+      const exifCandidate =
+        parsed?.DateTimeOriginal ??
+        parsed?.CreateDate ??
+        parsed?.DateTimeDigitized ??
+        parsed?.exif?.DateTimeOriginal ??
+        parsed?.exif?.CreateDate ??
+        null;
+
+      const xmpCandidate =
+        parsed?.xmp?.DateTimeOriginal ??
+        parsed?.xmp?.CreateDate ??
+        parsed?.MetadataDate ?? // często XMP
+        null;
+
+      const candidate = exifCandidate ?? xmpCandidate ?? null;
+
+      let takenAt: Date | null =
+        candidate instanceof Date
+          ? candidate
+          : typeof candidate === 'string'
+            ? new Date(candidate)
+            : null;
+
+      let takenAtSource: TakenAtSource =
+        exifCandidate != null ? 'EXIF' : xmpCandidate != null ? 'XMP' : 'UNKNOWN';
+
+      // Mega-fallback: timestamp pliku (systemowy)
+      if (!takenAt) {
+        takenAt = new Date(file.lastModified);
+        takenAtSource = 'FILE_TIMESTAMP';
+      }
+
+      // 2) GPS (różne miejsca zależnie od merge)
+      const lat = parsed?.latitude ?? parsed?.gps?.latitude ?? null;
+      const lon = parsed?.longitude ?? parsed?.gps?.longitude ?? null;
+
+      const location =
+        typeof lat === 'number' && typeof lon === 'number'
+          ? { latitude: lat, longitude: lon }
+          : null;
+
+      return { file, takenAt, takenAtSource, location };
+    } catch (error) {
+      console.warn('EXIF read failed for:', file.name, error);
+      return { file, takenAt: null, takenAtSource: 'UNKNOWN', location: null };
+    }
   }
-}
 }

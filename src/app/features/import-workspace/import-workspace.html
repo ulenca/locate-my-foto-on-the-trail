@@ -36,21 +36,8 @@
       </div>
 
       <!-- GPX panel -->
-      <div class="panel">
-        <div class="panel__header">
-          <h2 class="panel__title">GPX track</h2>
-          <p class="panel__subtitle">Upload a single GPX file.</p>
-        </div>
 
-        <div class="panel__content">
-          <label class="btn">
-            <input class="sr-only" type="file" accept=".gpx,application/gpx+xml,text/xml" />
-            <span>Add GPX</span>
-          </label>
-
-          <div class="panel__placeholder">Track preview will appear here.</div>
-        </div>
-      </div>
+      <app-gpx-panel (trackLoaded)="onTrackLoaded($event)" />
     </section>
   </div>
 </main>

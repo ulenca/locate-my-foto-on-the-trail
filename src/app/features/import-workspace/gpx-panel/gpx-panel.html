@@ -1,0 +1,50 @@
+<div class="panel">
+  <div class="panel__header">
+    <h2 class="panel__title">GPX track</h2>
+    <p class="panel__subtitle">Upload a single GPX file.</p>
+  </div>
+
+  <div class="panel__content">
+    <label class="btn">
+      <input
+        class="sr-only"
+        type="file"
+        accept=".gpx,application/gpx+xml,text/xml"
+        (change)="onGpxSelected($event)"
+      />
+      <span>Add GPX</span>
+    </label>
+
+    <div class="mt-6">
+      @if (isReadingGpx) {
+        <div class="panel__placeholder">Reading GPX…</div>
+      } @else if (points.length === 0) {
+        <div class="panel__placeholder">Track preview will appear here.</div>
+      } @else {
+        <div class="panel__placeholder">
+          <div class="text-zinc-200 font-semibold">{{ fileName }}</div>
+          <div class="mt-2 text-zinc-300">Points: {{ points.length }}</div>
+          <div class="mt-1 text-zinc-300">
+            Time range:
+            {{ points[0].time.toISOString() }}
+            →
+            {{ points[points.length - 1].time.toISOString() }}
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+  <div class="mt-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/30">
+  <svg viewBox="0 0 300 180" class="block h-44 w-full">
+    <polyline
+      [attr.points]="svgPolylinePoints"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      class="text-zinc-100"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+</div>
+</div>
