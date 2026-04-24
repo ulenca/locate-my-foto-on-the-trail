@@ -7,32 +7,34 @@
     <table class="w-full text-sm">
       <thead class="bg-zinc-950/40 text-zinc-300">
         <tr>
+          <th class="px-4 py-3 text-left font-medium">#</th>
           <th class="px-4 py-3 text-left font-medium">File</th>
           <th class="px-4 py-3 text-left font-medium">Taken at</th>
           <th class="px-4 py-3 text-left font-medium">Location (EXIF)</th>
         </tr>
       </thead>
 
-      <tbody class="divide-y divide-zinc-800">
-        @for (photo of photos; track photo.file.name) {
-          <tr class="hover:bg-zinc-950/30">
-            <td class="px-4 py-3">{{ photo.file.name }}</td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2">
-                <span>{{ formatTakenAt(photo.takenAt) }}</span>
+<tbody class="divide-y divide-zinc-800">
+  @for (photo of photos; track photo.file.name; let i = $index) {
+    <tr class="hover:bg-zinc-950/30">
+      <td class="px-4 py-3 text-zinc-300">{{ i + 1 }}</td>
+      <td class="px-4 py-3">{{ photo.file.name }}</td>
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+          <span>{{ formatTakenAt(photo.takenAt) }}</span>
 
-                <span
-                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1"
-                  [class]="sourceBadgeClass(photo.takenAtSource)"
-                >
-                  {{ sourceLabel(photo.takenAtSource) }}
-                </span>
-              </div>
-            </td>
-            <td class="px-4 py-3">{{ formatLocation(photo.location) }}</td>
-          </tr>
-        }
-      </tbody>
+          <span
+            class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1"
+            [class]="sourceBadgeClass(photo.takenAtSource)"
+          >
+            {{ sourceLabel(photo.takenAtSource) }}
+          </span>
+        </div>
+      </td>
+      <td class="px-4 py-3">{{ formatLocation(photo.location) }}</td>
+    </tr>
+  }
+</tbody>
     </table>
   </div>
 }

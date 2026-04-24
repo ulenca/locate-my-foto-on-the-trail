@@ -28,6 +28,26 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           />
+          @for (m of svgMarkers; track m.label) {
+  <g>
+    <rect
+      [attr.x]="m.x - 8"
+      [attr.y]="m.y - 8"
+      width="16"
+      height="16"
+      rx="4"
+      class="fill-zinc-100/90"
+    />
+    <text
+      [attr.x]="m.x"
+      [attr.y]="m.y + 4"
+      text-anchor="middle"
+      class="fill-zinc-900 text-[10px] font-bold"
+    >
+      {{ m.label }}
+    </text>
+  </g>
+}
         </svg>
       </div>
     }

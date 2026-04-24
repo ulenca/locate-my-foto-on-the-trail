@@ -56,7 +56,13 @@ onTrackLoaded(track: GpxTrack): void {
         .filter((r): r is PromiseFulfilledResult<PhotoAsset> => r.status === 'fulfilled')
         .map((r) => r.value);
 
-      this.importedPhotos = photos.sort((a, b) => a.file.name.localeCompare(b.file.name));
+this.importedPhotos = photos.sort((a, b) => {
+  const at = a.takenAt?.getTime() ?? Number.POSITIVE_INFINITY;
+  const bt = b.takenAt?.getTime() ?? Number.POSITIVE_INFINITY;
+
+  if (at !== bt) return at - bt;
+  return a.file.name.localeCompare(b.file.name);
+});
       console.log(
         'Imported photos count:',
         this.importedPhotos.length,
