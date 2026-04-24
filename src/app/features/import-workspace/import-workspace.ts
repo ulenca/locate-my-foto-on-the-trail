@@ -1,3 +1,5 @@
+import JSZip from 'jszip';
+import piexif from 'piexifjs';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, PLATFORM_ID, inject } from '@angular/core';
 import { GeoCoordinate } from '../../domain/geo-coordinate';
@@ -5,6 +7,7 @@ import { PhotoAsset, TakenAtSource } from '../../domain/photo-asset';
 import { PhotoPreviewComponent } from './photo-preview/photo-preview';
 import { GpxPanelComponent, GpxTrack } from './gpx-panel/gpx-panel';
 import { TrackPreviewComponent } from './track-preview/track-preview';
+
 
 @Component({
   selector: 'app-import-workspace',
@@ -210,5 +213,115 @@ private findNearestTrackPointByTime(
   const dRight = Math.abs(right.time.getTime() - target);
 
   return dLeft <= dRight ? left : right;
+}
+
+
+//eskport zdjec
+async downloadGeotaggedPhotosZip(): Promise<void> {
+  if (this.importedPhotos.length === 0) return;
+
+  const zip = new JSZip();
+
+  for (const photo of this.importedPhotos) {
+    const originalName = photo.file.name;
+    const outputName = this.withSuffixBeforeExtension(originalName, '_geotagged');
+
+    // jeśli nie mamy lokalizacji – wrzucamy oryginał (albo możesz pominąć)
+    if (!photo.location) {
+      zip.file(originalName, photo.file);
+      continue;
+    }
+
+    // zapis GPS do EXIF
+    const dataUrl = await this.readFileAsDataUrl(photo.file);
+    const updatedDataUrl = this.writeGpsToJpegDataUrl(dataUrl, photo.location.latitude, photo.location.longitude);
+    const updatedBlob = this.dataUrlToBlob(updatedDataUrl);
+
+    zip.file(outputName, updatedBlob);
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  this.downloadBlob(zipBlob, 'geotagged-photos.zip');
+}
+
+private writeGpsToJpegDataUrl(dataUrl: string, lat: number, lon: number): string {
+  const exifObj = piexif.load(dataUrl);
+
+  const { ref: latRef, dms: latDms } = this.decimalToGpsDms(lat, true);
+  const { ref: lonRef, dms: lonDms } = this.decimalToGpsDms(lon, false);
+
+  exifObj['GPS'][piexif.GPSIFD.GPSLatitudeRef] = latRef;
+  exifObj['GPS'][piexif.GPSIFD.GPSLatitude] = latDms;
+
+  exifObj['GPS'][piexif.GPSIFD.GPSLongitudeRef] = lonRef;
+  exifObj['GPS'][piexif.GPSIFD.GPSLongitude] = lonDms;
+
+  // (opcjonalnie) GPSVersionID – często spotykane
+  exifObj['GPS'][piexif.GPSIFD.GPSVersionID] = [2, 3, 0, 0];
+
+  const exifBytes = piexif.dump(exifObj);
+  return piexif.insert(exifBytes, dataUrl);
+}
+
+private decimalToGpsDms(value: number, isLat: boolean): { ref: 'N' | 'S' | 'E' | 'W'; dms: [number, number][] } {
+  const ref = isLat ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
+  const abs = Math.abs(value);
+
+  const degrees = Math.floor(abs);
+  const minutesFloat = (abs - degrees) * 60;
+  const minutes = Math.floor(minutesFloat);
+  const seconds = (minutesFloat - minutes) * 60;
+
+  // piexif oczekuje rationali: [licznik, mianownik]
+  const sec = this.toRational(seconds, 100); // dokładność 1/100 sekundy
+
+  return {
+    ref,
+    dms: [
+      [degrees, 1],
+      [minutes, 1],
+      sec,
+    ],
+  };
+}
+
+private toRational(value: number, denominator: number): [number, number] {
+  const numerator = Math.round(value * denominator);
+  return [numerator, denominator];
+}
+
+private readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(file);
+  });
+}
+
+private dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/data:(.*?);base64/)?.[1] ?? 'image/jpeg';
+
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  return new Blob([bytes], { type: mime });
+}
+
+private downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+private withSuffixBeforeExtension(name: string, suffix: string): string {
+  const dot = name.lastIndexOf('.');
+  if (dot === -1) return `${name}${suffix}`;
+  return `${name.slice(0, dot)}${suffix}${name.slice(dot)}`;
 }
 }
