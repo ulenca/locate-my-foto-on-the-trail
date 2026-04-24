@@ -1,0 +1,35 @@
+<div class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 shadow-sm backdrop-blur">
+  <div class="border-b border-zinc-800 px-6 py-5">
+    <h2 class="text-lg font-semibold">Track preview</h2>
+    <p class="mt-1 text-sm text-zinc-300">
+      This area will later contain photo markers and export actions.
+    </p>
+  </div>
+
+  <div class="px-6 py-6">
+    @if (!track) {
+      <div class="panel__placeholder">Upload GPX to see the track preview.</div>
+    } @else if (track.points.length < 2) {
+      <div class="panel__placeholder">GPX contains too few points to draw a track.</div>
+    } @else {
+      <div class="text-sm text-zinc-300">
+        <span class="font-semibold text-zinc-100">{{ track.fileName }}</span>
+        • {{ track.points.length }} points
+      </div>
+
+      <div class="mt-4 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/30">
+        <svg viewBox="0 0 900 320" class="block h-80 w-full">
+          <polyline
+            [attr.points]="svgPolylinePoints"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="text-zinc-100"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+    }
+  </div>
+</div>

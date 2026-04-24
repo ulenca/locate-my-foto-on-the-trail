@@ -4,10 +4,11 @@ import { GeoCoordinate } from '../../domain/geo-coordinate';
 import { PhotoAsset, TakenAtSource } from '../../domain/photo-asset';
 import { PhotoPreviewComponent } from './photo-preview/photo-preview';
 import { GpxPanelComponent, GpxTrack } from './gpx-panel/gpx-panel';
+import { TrackPreviewComponent } from './track-preview/track-preview';
 
 @Component({
   selector: 'app-import-workspace',
-  imports: [PhotoPreviewComponent, CommonModule, GpxPanelComponent],
+  imports: [PhotoPreviewComponent, CommonModule, TrackPreviewComponent, GpxPanelComponent],
   templateUrl: './import-workspace.html',
   styleUrl: './import-workspace.scss',
 })
@@ -162,4 +163,52 @@ onTrackLoaded(track: GpxTrack): void {
       return { file, takenAt: null, takenAtSource: 'UNKNOWN', location: null };
     }
   }
+
+  locatePhotos(): void {
+  if (!this.gpxTrack || this.gpxTrack.points.length === 0) return;
+
+  const trackPoints = this.gpxTrack.points;
+
+  this.importedPhotos = this.importedPhotos.map((photo) => {
+    if (photo.location) return photo;           // już ma lokalizację
+    if (!photo.takenAt) return photo;           // brak czasu -> nie dopasujemy
+
+    const nearest = this.findNearestTrackPointByTime(trackPoints, photo.takenAt);
+    if (!nearest) return photo;
+
+    return {
+      ...photo,
+      location: { latitude: nearest.latitude, longitude: nearest.longitude },
+    };
+  });
+}
+
+private findNearestTrackPointByTime(
+  points: ReadonlyArray<{ time: Date; latitude: number; longitude: number }>,
+  targetTime: Date,
+): { time: Date; latitude: number; longitude: number } | null {
+  // points są już posortowane po czasie w parseGpxTrackPoints()
+  const target = targetTime.getTime();
+  if (points.length === 0) return null;
+
+  // binary search: pierwszy punkt z time >= target
+  let lo = 0;
+  let hi = points.length - 1;
+
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (points[mid].time.getTime() < target) lo = mid + 1;
+    else hi = mid;
+  }
+
+  const right = points[lo];
+  const left = lo > 0 ? points[lo - 1] : null;
+
+  if (!left) return right;
+
+  const dLeft = Math.abs(left.time.getTime() - target);
+  const dRight = Math.abs(right.time.getTime() - target);
+
+  return dLeft <= dRight ? left : right;
+}
 }

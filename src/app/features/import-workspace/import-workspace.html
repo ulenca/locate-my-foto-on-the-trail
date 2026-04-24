@@ -38,6 +38,19 @@
       <!-- GPX panel -->
 
       <app-gpx-panel (trackLoaded)="onTrackLoaded($event)" />
+
     </section>
+<div class="mt-6 flex items-center justify-center">
+  <button
+    type="button"
+    class="inline-flex items-center justify-center rounded-xl bg-zinc-100 px-6 py-3 text-sm font-semibold text-zinc-900 hover:bg-white disabled:opacity-50"
+    [disabled]="!gpxTrack || importedPhotos.length === 0"
+    (click)="locatePhotos()"
+  >
+    Locate photos
+  </button>
+</div>
+                <app-track-preview [track]="gpxTrack" />
+              
   </div>
 </main>
